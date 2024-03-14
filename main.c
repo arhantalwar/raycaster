@@ -1,12 +1,14 @@
 #include <math.h>
 #include <raylib.h>
-#include <stdio.h>
 
 #define width 1024
 #define height 720
 #define pi 3.14159
 
 #define world_size 8
+#define num_white_blocks 1
+
+int count = 0;
 
 typedef struct Quad {
     Vector3 x1;
@@ -39,37 +41,61 @@ void draw_map(int map[][world_size], Quad quad_map[][4]) {
 
                 DrawRectangle(i * 64, j * 64, 64, 64, WHITE);
 
-                //DrawCircle((i * 64), (j * 64), 5, BLUE);
-                //DrawCircle((i * 64) + 64, (j * 64), 5, RED);
-                //DrawCircle((i * 64) + 64, (j * 64) + 64, 5, GREEN);
-                //DrawCircle((i * 64), (j * 64) + 64, 5, PURPLE);
-
-                int points[4][2] = {
-                    {(i * 64), (j * 64)},
-                    {(i * 64) + 64, (j * 64)},
-                    {(i * 64) + 64, (j * 64) + 64},
-                    {(i * 64), (j * 64) + 64},
-                };
+                /* int points[4][2] = { */
+                /*     {(i * 64), (j * 64)}, */
+                /*     {(i * 64) + 64, (j * 64)}, */
+                /*     {(i * 64) + 64, (j * 64) + 64}, */
+                /*     {(i * 64), (j * 64) + 64}, */
+                /* }; */
                 
-                for (int l = 0; l < 2; l++) {
+                for (int l = 0; l < num_white_blocks; l++) {
 
-                    for (int k = 0; k < 4; k++) {
+                    quad_map[l][0] = getQuad(
+                            (Vector2) {
+                                .x = (i * 64),
+                                .y = (j * 64)
+                            },
+                            (Vector2) {
+                                .x = (i * 64) + 64,
+                                .y = (j * 64)
+                            }
+                    );
+                    
+                    quad_map[l][1] = getQuad(
+                            (Vector2) {
+                                .x = (i * 64) + 64,
+                                .y = (j * 64)
+                            },
+                            (Vector2) {
+                                .x = (i * 64) + 64,
+                                .y = (j * 64) + 64
+                            }
+                    );
 
-                        quad_map[0][k] = getQuad(
-                                (Vector2) {
-                                    .x = (i * 64),
-                                    .y = (j * 64)
-                                },
-                                (Vector2) {
-                                    .x = (i * 64) + 64,
-                                    .y = (j * 64)
-                                }
-                        );
+                    quad_map[l][2] = getQuad(
+                            (Vector2) {
+                                .x = (i * 64) + 64,
+                                .y = (j * 64) + 64
+                            },
+                            (Vector2) {
+                                .x = (i * 64),
+                                .y = (j * 64) + 64
+                            }
+                    );
 
-                    }
+                    quad_map[l][3] = getQuad(
+                            (Vector2) {
+                                .x = (i * 64),
+                                .y = (j * 64) + 64
+                            },
+                            (Vector2) {
+                                .x = (i * 64),
+                                .y = (j * 64)
+                            }
+                    );
                 
                 }
-                
+
 
                 DrawLine(0, j * 64, 512, j * 64, RAYWHITE);
                 DrawLine(i * 64, 0, i * 64, 512, RAYWHITE);
@@ -91,32 +117,39 @@ void draw_player(pVector player_position) {
 
 void draw_ray(pVector player_position, Quad quad_map[][4]) {
 
-    for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < num_white_blocks; j++) {
 
-        Ray r = {
-            .direction = (Vector3) {
-                .x = player_position.pdx,
-                .y = player_position.pdy,
-                .z = 0
-            },
-            .position = (Vector3) {
-                .x = player_position.px + 16,
-                .y = player_position.py + 16,
-                .z = 0
+        for (int i = 0; i < 4; i++) {
+
+
+            Ray r = {
+                .direction = (Vector3) {
+                    .x = player_position.pdx,
+                    .y = player_position.pdy,
+                    .z = 0
+                },
+                .position = (Vector3) {
+                    .x = player_position.px + 16,
+                    .y = player_position.py + 16,
+                    .z = 0
+                }
+            };
+
+            Quad q;
+
+            q = quad_map[j][i];
+
+            RayCollision rc = GetRayCollisionQuad(r, q.x1, q.x2, q.y1, q.y2);
+
+            if (rc.hit == true) {
+                count++;
             }
-        };
 
-        Quad q;
+            DrawRay(r, GREEN);
 
-        q = quad_map[0][i];
-
-        RayCollision rc = GetRayCollisionQuad(r, q.x1, q.x2, q.y1, q.y2);
-
-        if (rc.hit == true) {
-            printf("HIT!\n");
         }
 
-        DrawRay(r, GREEN);
+
 
     }
 
@@ -127,10 +160,10 @@ int main() {
     int map[world_size][world_size] = {
         {0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
     };
@@ -144,7 +177,7 @@ int main() {
         /* {1, 0, 0, 0, 0, 0, 0 ,1}, */
         /* {1, 1, 1, 1, 1, 1, 1 ,1}, */
 
-    Quad quad_map[1][4];
+    Quad quad_map[num_white_blocks][4];
 
     SetTraceLogLevel(LOG_WARNING);
     SetTargetFPS(60);
